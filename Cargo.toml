@@ -1,0 +1,15 @@
+[package]
+name = "tree-migration"
+version = "0.1.0"
+edition = "2018"
+authors = ["alphalpha"]
+
+[dependencies]
+chrono = "*"
+confy = "*"
+conv = "*"
+image = "*"
+imageproc = "*"
+rusttype = "*"
+serde_derive = "*"
+serde = { version = "*", features = ["derive"] }

@@ -1,0 +1,35 @@
+# Path to the folder that contains the source images
+images_path = "src/test_data"
+
+# Rectangle that is used to calculate the mean color
+# [x-coordinate, y-coordinate, width, height]
+roi = [100, 100, 100, 100]
+
+font_path = "src/DejaVuSans.ttf"
+
+font_size = 14
+# Font Color
+# [R, G, B]
+font_color = [51, 68, 114]
+
+location = "MC105"
+
+# [year, month, day]
+start_date = [2018, 3, 4]
+
+# [year, month, day]
+end_date = [2018, 3, 4]
+
+duration = 30
+
+# sunset and sunrise
+# [hour, hour]
+# If the two values are the same, no night images will be generated
+night_times = [22, 6]
+
+# Color of night image
+# [R, G, B]
+night_color = [0, 0, 0]
+
+# In minutes. If set to 0, no night images will be generated
+night_duration = 120
