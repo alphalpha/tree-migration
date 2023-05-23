@@ -22,29 +22,11 @@ fn image_paths(dir: &Path) -> Result<Vec<PathBuf>, util::Error> {
     Ok(paths)
 }
 
-fn parse_date(name: &str) -> Result<(DateTime<Utc>, String), util::Error> {
-    let mut parts: Vec<&str> = name.splitn(5, '_').collect();
-    match parts.len() {
-        5 => {
-            let parts = parts.split_off(2);
-            let (year, rest) = parts[1].split_at(4);
-            let (month, day) = rest.split_at(2);
-            let date = day.to_string() + "." + month + "." + year;
-            let (hour, rest) = parts[2].split_at(2);
-            let (minutes, seconds) = rest.split_at(2);
-            let time = hour.to_string() + ":" + minutes + ":" + seconds;
-
-            let utc = Utc
-                .with_ymd_and_hms(
-                    year.parse()?,
-                    month.parse()?,
-                    day.parse()?,
-                    hour.parse()?,
-                    minutes.parse()?,
-                    seconds.parse()?,
-                )
-                .unwrap();
-            Ok((utc, String::from(date + ", " + &time)))
+fn parse_date(name: &str, config: &Config) -> Result<(DateTime<Utc>, String), util::Error> {
+    match Utc.datetime_from_str(name, config.file_name.as_str()) {
+        Ok(date_time) => {
+            let date = format!("{}", date_time.format("%d.%m.%Y, %H:%M:%S"));
+            Ok((date_time, date))
         }
         _ => Err(util::Error::Custom(String::from(
             "File: \"".to_string() + name + "\" has wrong name format",
@@ -53,19 +35,16 @@ fn parse_date(name: &str) -> Result<(DateTime<Utc>, String), util::Error> {
 }
 
 fn output_file_path(
-    target_dir: &Path,
+    config: &Config,
     source_file: &Path,
     utc: &DateTime<Utc>,
 ) -> Result<PathBuf, util::Error> {
-    let mut stem = source_file
-        .file_stem()
-        .ok_or_else(|| util::Error::Custom(String::from("Could not extract the file name")))?
-        .to_os_string();
-    stem.push("_green");
-    stem.push(utc.to_string());
+    let file_name =
+        config.location.clone() + "-" + config.camera.as_str() + utc.to_string().as_str();
     let path =
-        target_dir
-            .join(stem)
+        config
+            .output_path
+            .join(file_name)
             .with_extension(source_file.extension().ok_or_else(|| {
                 util::Error::Custom(String::from("Could not obtain the file extension"))
             })?);
@@ -102,13 +81,13 @@ fn generate_image(
         x: config.font.pos.0 as i32,
         y: config.font.pos.1 as i32,
     };
-    let location_date = config.location.clone() + ", " + &date;
+    let location_date = config.location.clone() + ", " + &config.camera + ", " + &date;
     draw_citing(in_image, &config, &position, &location_date.as_str());
 
-    let font_height = config.font.scale.y as i32;
-    position.y = config.font.pos.1 + font_height;
-    let title = "Average colour of forest activity";
-    draw_citing(in_image, &config, &position, title);
+    // let font_height = config.font.scale.y as i32;
+    // position.y = config.font.pos.1 + font_height;
+    // let title = "Location: 65°43'30.7\"N 27°23\'17.3\"E";
+    // draw_citing(in_image, &config, &position, title);
     Ok(())
 }
 
@@ -128,23 +107,26 @@ fn generate_night_image(
         y: config.font.pos.1,
     };
     let date = format!("{}", current_date.format("%d.%m.%Y, %T"));
-    let location_date = config.location.clone() + ", " + &date;
+    let location_date = config.location.clone() + ", " + &config.camera + ", " + &date;
     draw_citing(&mut image, &config, &position, &location_date.as_str());
 
-    let font_height = config.font.scale.y as i32;
-    position.y = config.font.pos.1 + font_height;
-    let title = "Average colour of forest activity";
-    draw_citing(&mut image, &config, &position, title);
+    // let font_height = config.font.scale.y as i32;
+    // position.y = config.font.pos.1 + font_height;
+    // let title = "Location: 65°43'30.7\"N 27°23\'17.3\"E";
+    // draw_citing(&mut image, &config, &position, title);
 
     Ok(image)
 }
 
-fn date_from_file_name(file_path: &Path) -> Result<(DateTime<Utc>, String), util::Error> {
+fn date_from_file_name(
+    file_path: &Path,
+    config: &Config,
+) -> Result<(DateTime<Utc>, String), util::Error> {
     file_path
         .file_stem()
         .and_then(|s| s.to_str())
         .ok_or_else(|| util::Error::Custom(String::from("Cannot obtain file name")))
-        .and_then(|n| parse_date(n))
+        .and_then(|n| parse_date(n, config))
 }
 
 pub fn run(config: Config) -> Result<(), util::Error> {
@@ -152,12 +134,12 @@ pub fn run(config: Config) -> Result<(), util::Error> {
     let mut current_date = config.start_date.clone();
     let mut file_iter = input_paths.iter();
     let mut file = file_iter.next().unwrap();
-    let (_, mut date) = date_from_file_name(&file)?;
+    let (_, mut date) = date_from_file_name(&file, &config)?;
     let mut night_end = None;
 
     while current_date < config.end_date {
         for p in input_paths.iter() {
-            let (u, d) = date_from_file_name(&p)?;
+            let (u, d) = date_from_file_name(&p, &config)?;
             if u > current_date {
                 continue;
             }
@@ -192,7 +174,7 @@ pub fn run(config: Config) -> Result<(), util::Error> {
                 }
                 if let Some(i) = in_image {
                     let image = generate_night_image(&config, i.dimensions(), &current_date)?;
-                    output_file_path(&config.output_path, &file, &current_date)
+                    output_file_path(&config, &file, &current_date)
                         .and_then(|path| image.save(path).map_err(|e| util::Error::Image(e)))?;
                 }
 
@@ -208,7 +190,7 @@ pub fn run(config: Config) -> Result<(), util::Error> {
         } else {
             if let Some(mut i) = in_image {
                 generate_image(&config, &mut i, &date)?;
-                output_file_path(&config.output_path, &file, &current_date)
+                output_file_path(&config, &file, &current_date)
                     .and_then(|path| i.save(path).map_err(|e| util::Error::Image(e)))?;
             }
             current_date = current_date + config.duration;

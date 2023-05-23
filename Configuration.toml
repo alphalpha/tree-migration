@@ -12,7 +12,25 @@ font_size = 14
 # [R, G, B]
 font_color = [51, 68, 114]
 
-location = "MC105"
+location = "Pudasjärvi, Finland"
+
+camera = "Canon EOS"
+
+# File name format of the input files
+# Replace date and time with the following specifiers
+# %Y The full proleptic Gregorian year. E.g. 2001
+# %y The proleptic Gregorian year modulo 100, zero-padded to 2 digits. E.g. 01
+# %m Month number (01–12), zero-padded to 2 digits. E.g. 07
+# %b Abbreviated month name. Always 3 letters. E.g. Jul
+# %B Full month name. Also accepts corresponding abbreviation in parsing. E.g. July
+# %d Day number (01–31), zero-padded to 2 digits. E.g. 08
+# %a Abbreviated weekday name. Always 3 letters. E.g. Sun
+# %A Full weekday name. Also accepts corresponding abbreviation in parsing. E.g. Sunday
+# %H Hour number (00–23), zero-padded to 2 digits. E.g. 05
+# %M Minute number (00–59), zero-padded to 2 digits. E.g. 24
+# %S Second number (00–60), zero-padded to 2 digits. E.g. 34
+# Example Input File: test_image_test_20180304_041723.jpg
+file_name = "test_image_test_%Y%m%d_%H%M%S"
 
 # [year, month, day]
 start_date = [2018, 3, 4]
