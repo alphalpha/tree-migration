@@ -29,8 +29,9 @@ camera = "Canon EOS"
 # %H Hour number (00–23), zero-padded to 2 digits. E.g. 05
 # %M Minute number (00–59), zero-padded to 2 digits. E.g. 24
 # %S Second number (00–60), zero-padded to 2 digits. E.g. 34
-# Example Input File: test_image_test_20180304_041723.jpg
-file_name = "test_image_test_%Y%m%d_%H%M%S"
+# %xf Ignore number (x) of characters. E.g. %4f
+# Example Input File: test_image_test_20180304_041723-123456.jpg
+file_name = "test_image_test_%Y%m%d_%H%M%S-%6f"
 
 # [year, month, day]
 start_date = [2018, 3, 4]
