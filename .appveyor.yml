@@ -1,0 +1,40 @@
+cache: cargo
+
+os: Visual Studio 2019
+
+branches:
+  only:
+    - main
+    - /v\d+\.\d/
+
+environment:
+  matrix:
+    - channel: stable
+      target: x86_64-pc-windows-msvc
+
+install:
+  - curl -sSf -o rustup-init.exe https://win.rustup.rs
+  - rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
+  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - rustc -Vv
+  - cargo -V
+
+test_script:
+  - cargo test --verbose
+  - cargo build --release --verbose
+  - ls -l "%APPVEYOR_BUILD_FOLDER%/target/release"
+  #- 7z a opensim-metabolicsprobes_v%NICKN%.zip %APPVEYOR_BUILD_FOLDER%/install/
+  - appveyor PushArtifact "%APPVEYOR_BUILD_FOLDER%/target/release/tree-migration.exe"
+
+build: false
+
+deploy:
+  provider: GitHub
+  skip_cleanup: true
+  auth_token:
+    secure: f3whT/Ou2+pej8+UW9a1T5/l0W5qxD9apBKzuFROUrFdx12+bQ8e+I+rhK1psYFF
+  artifact:
+  draft: false
+  prerelease: false
+  on:
+    appveyor_repo_tag: true
