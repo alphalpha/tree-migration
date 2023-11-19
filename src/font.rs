@@ -1,3 +1,4 @@
+use crate::util::Error;
 use image::Rgb;
 use rusttype::{point, PositionedGlyph, Scale};
 use std::path::Path;
@@ -11,20 +12,18 @@ pub struct Font {
 }
 
 impl Font {
-    pub fn new(path: &Path, size: f32, background_color: Rgb<u8>) -> Font {
-        println!("botu to Read font file");
-        let data = std::fs::read(&path).unwrap();
-        println!("Read font file");
-        let font = rusttype::Font::try_from_vec(data).unwrap_or_else(|| {
-            panic!("error constructing a Font from data at {:?}", path);
-        });
-        Font {
+    pub fn new(path: &Path, size: f32, background_color: Rgb<u8>) -> Result<Font, Error> {
+        let data = std::fs::read(&path)
+            .map_err(|_| Error::Custom(format!("Cannot read {}", path.display())))?;
+        let font = rusttype::Font::try_from_vec(data)
+            .ok_or(Error::Custom(format!("Cannot read {}", path.display())))?;
+        Ok(Font {
             font: font,
             scale: Scale::uniform(size),
             color: Rgb([255, 255, 255]),
             pos: (0, 0),
             background_color: background_color,
-        }
+        })
     }
 }
 

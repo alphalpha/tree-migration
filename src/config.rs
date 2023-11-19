@@ -67,6 +67,12 @@ impl Config {
     pub fn from(path: &Path) -> Result<Config, util::Error> {
         let raw_config: RawConfig = confy::load_path(path)?;
         let input_dir = Path::new(&raw_config.images_path).to_path_buf();
+        if !input_dir.exists() {
+            return Err(util::Error::Custom(format!(
+                "Images Path {} does not exist",
+                input_dir.display()
+            )));
+        }
         if let Ok(metadata) = input_dir.metadata() {
             if !metadata.is_dir() {
                 return Err(util::Error::Custom(String::from(
@@ -75,13 +81,15 @@ impl Config {
             };
         }
         let output_dir = input_dir.join(Path::new("Output"));
-        fs::create_dir(&output_dir)?;
+        fs::create_dir(&output_dir).map_err(|_| {
+            util::Error::Custom(format!("{} already exists.", output_dir.display()))
+        })?;
 
         let font = font::Font::new(
             Path::new(&raw_config.font_path),
             raw_config.font_size,
             Rgb(raw_config.font_color),
-        );
+        )?;
 
         let mut night_times = None;
         if raw_config.night_times[0] != raw_config.night_times[1] {
