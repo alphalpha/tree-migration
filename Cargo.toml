@@ -1,16 +1,16 @@
 [package]
 name = "tree-migration"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 authors = ["alphalpha"]
 
 [dependencies]
-async-std = "*"
-chrono = "*"
-confy = "*"
-conv = "*"
-image = "*"
-imageproc = "*"
-rusttype = "*"
-serde_derive = "*"
-serde = { version = "*", features = ["derive"] }
+async-std = "1.12.0"
+chrono = "0.4.31"
+confy = "0.5.1"
+conv = "0.3.3"
+image = "0.24.7"
+imageproc = "0.23.0"
+rusttype = "0.9.3"
+serde_derive = "1.0.192"
+serde = { version = "1.0.192", features = ["derive"] }
