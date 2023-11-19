@@ -1,3 +1,4 @@
+use async_std::task;
 use std::env;
 use std::path::Path;
 use std::process;
@@ -20,8 +21,11 @@ fn main() {
             process::exit(1);
         });
 
-    if let Err(e) = tree_migration::run(config) {
-        eprintln!("Application Error: {}", e);
-        process::exit(1);
-    }
+    let task = task::spawn(async {
+        if let Err(e) = tree_migration::run(config).await {
+            eprintln!("Application Error: {}", e);
+            process::exit(1);
+        }
+    });
+    task::block_on(task);
 }

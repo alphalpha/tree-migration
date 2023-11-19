@@ -5,6 +5,7 @@ edition = "2018"
 authors = ["alphalpha"]
 
 [dependencies]
+async-std = "*"
 chrono = "*"
 confy = "*"
 conv = "*"

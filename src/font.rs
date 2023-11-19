@@ -3,6 +3,7 @@ use image::Rgb;
 use rusttype::{point, PositionedGlyph, Scale};
 use std::path::Path;
 
+#[derive(Clone)]
 pub struct Font {
     pub font: rusttype::Font<'static>,
     pub scale: Scale,

@@ -46,6 +46,7 @@ impl ::std::default::Default for RawConfig {
     }
 }
 
+#[derive(Clone)]
 pub struct Config {
     pub input_path: PathBuf,
     pub output_path: PathBuf,

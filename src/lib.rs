@@ -7,7 +7,7 @@ pub use util::Error;
 
 use chrono::{Duration, Utc};
 
-pub fn run(config: crate::config::Config) -> Result<(), crate::util::Error> {
+pub async fn run(config: crate::config::Config) -> Result<(), crate::util::Error> {
     use crate::util::*;
     let input_paths = image_paths(&config.input_path)?;
     let mut current_date = config.start_date.clone();
