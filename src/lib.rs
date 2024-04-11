@@ -7,7 +7,15 @@ pub use util::Error;
 
 use chrono::{Duration, Utc};
 
-pub async fn run(config: crate::config::Config) -> Result<(), crate::util::Error> {
+pub async fn run(
+    config: crate::config::Config,
+    forest_green: bool,
+) -> Result<(), crate::util::Error> {
+    println!(
+        "Start Processing.\nInput: {:?}\nForest Green: {}\n...",
+        config.input_path,
+        if forest_green { "Enabled" } else { "Disabled" }
+    );
     use crate::util::*;
     let input_paths = image_paths(&config.input_path)?;
     let mut current_date = config.start_date.clone();
@@ -52,7 +60,8 @@ pub async fn run(config: crate::config::Config) -> Result<(), crate::util::Error
                     }
                 }
                 if let Some(i) = in_image {
-                    let image = generate_night_image(&config, i.dimensions(), &current_date)?;
+                    let image =
+                        generate_night_image(&config, i.dimensions(), &current_date, forest_green)?;
                     output_file_path(&config, &file, &current_date)
                         .and_then(|path| image.save(path).map_err(|e| Error::Image(e)))?;
                 }
@@ -68,9 +77,9 @@ pub async fn run(config: crate::config::Config) -> Result<(), crate::util::Error
             }
         } else {
             if let Some(mut i) = in_image {
-                generate_image(&config, &mut i, &date)?;
+                let image = generate_image(&config, &mut i, &date, forest_green)?;
                 output_file_path(&config, &file, &current_date)
-                    .and_then(|path| i.save(path).map_err(|e| Error::Image(e)))?;
+                    .and_then(|path| image.save(path).map_err(|e| Error::Image(e)))?;
             }
             current_date = current_date + config.duration;
         }

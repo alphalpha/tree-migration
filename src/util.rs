@@ -4,12 +4,40 @@ use std::{fmt, io, num};
 
 use crate::font;
 use chrono::{DateTime, TimeZone, Utc};
-use image::RgbImage;
+use image::{GenericImage, ImageBuffer, Rgb, RgbImage};
 use imageproc::drawing::{draw_filled_rect_mut, draw_text_mut};
 use imageproc::rect::Rect;
 use rusttype::Point;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+fn crop_image(image: &mut RgbImage, rect: &Rect) -> Result<RgbImage, Error> {
+    Ok(image
+        .sub_image(
+            rect.left() as u32,
+            rect.top() as u32,
+            rect.width(),
+            rect.height(),
+        )
+        .to_image())
+}
+
+fn mean_color(image: &RgbImage) -> Result<Rgb<u8>, Error> {
+    let num_pixels = image.width() * image.height();
+    let color: Vec<u8> = image
+        .pixels()
+        .fold(vec![0u32, 0u32, 0u32], |mut acc, pixel| {
+            for i in 0..acc.len() {
+                acc[i] += pixel[i] as u32;
+            }
+            acc
+        })
+        .iter()
+        .map(|c| (c / num_pixels) as u8)
+        .collect();
+
+    Ok(Rgb([color[0], color[1], color[2]]))
+}
 
 pub fn image_paths(dir: &Path) -> Result<Vec<PathBuf>, Error> {
     let mut paths: Vec<_> = fs::read_dir(dir)?
@@ -48,7 +76,6 @@ pub fn output_file_path(
             .extension()
             .ok_or_else(|| Error::Custom(String::from("Could not obtain the file extension")))?,
     );
-    println!("Save {:?}", path);
     Ok(path)
 }
 
@@ -81,7 +108,8 @@ pub fn generate_image(
     config: &crate::config::Config,
     in_image: &mut RgbImage,
     date: &String,
-) -> Result<(), Error> {
+    forest_green: bool,
+) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Error> {
     let position = Point {
         x: config.font.pos.0 as i32,
         y: config.font.pos.1 as i32,
@@ -89,19 +117,51 @@ pub fn generate_image(
     let location_date = config.location.clone() + ", " + &config.camera + ", " + &date;
     draw_citing(in_image, &config, &position, &location_date.as_str());
 
-    // let font_height = config.font.scale.y as i32;
-    // position.y = config.font.pos.1 + font_height;
-    // let title = "Location: 65°43'30.7\"N 27°23\'17.3\"E";
-    // draw_citing(in_image, &config, &position, title);
-    Ok(())
+    if forest_green {
+        let color = crop_image(in_image, &config.roi).and_then(|i| mean_color(&i))?;
+        let dimensions = in_image.dimensions();
+        let mut image = image::ImageBuffer::new(2 * dimensions.0, dimensions.1);
+
+        for (x, y, pixel) in image.enumerate_pixels_mut() {
+            if x < dimensions.0 {
+                *pixel = color;
+            } else {
+                *pixel = *in_image.get_pixel(x - dimensions.0, y);
+            }
+        }
+
+        let mut position = Point {
+            x: config.font.pos.0,
+            y: config.font.pos.1,
+        };
+        let location_date = config.location.clone() + ", " + &date;
+        draw_citing(&mut image, &config, &position, &location_date.as_str());
+
+        let font_height = config.font.scale.y;
+        position.y = config.font.pos.1 + font_height as i32;
+        let title = "Average colour of forest activity";
+        draw_citing(&mut image, &config, &position, title);
+
+        position.y = config.font.pos.1 + 2 * font_height as i32;
+        let color_string = format!("{:?}", color);
+        draw_citing(&mut image, &config, &position, &color_string.as_str());
+        Ok(image)
+    } else {
+        Ok(in_image.clone())
+    }
 }
 
 pub fn generate_night_image(
     config: &crate::config::Config,
     dimensions: (u32, u32),
     current_date: &DateTime<Utc>,
+    forest_green: bool,
 ) -> Result<RgbImage, Error> {
-    let mut image = image::ImageBuffer::new(dimensions.0, dimensions.1);
+    let mut image = if forest_green {
+        image::ImageBuffer::new(2 * dimensions.0, dimensions.1)
+    } else {
+        image::ImageBuffer::new(dimensions.0, dimensions.1)
+    };
 
     for (_x, _y, pixel) in image.enumerate_pixels_mut() {
         *pixel = config.night_color;

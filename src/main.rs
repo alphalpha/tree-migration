@@ -5,7 +5,7 @@ use std::process;
 use tree_migration::{Config, Error};
 
 fn help() -> String {
-    String::from("usage: forest-green [<configuration_file>]\n")
+    String::from("usage: forest-green <configuration_file> [--forest_green]\n")
 }
 
 fn main() {
@@ -21,11 +21,17 @@ fn main() {
             process::exit(1);
         });
 
-    let task = task::spawn(async {
-        if let Err(e) = tree_migration::run(config).await {
+    let forest_green = args
+        .next()
+        .map(|p| p == "--forest_green")
+        .unwrap_or_else(|| false);
+
+    let task = task::spawn(async move {
+        if let Err(e) = tree_migration::run(config, forest_green).await {
             eprintln!("Application Error: {}", e);
             process::exit(1);
         }
     });
     task::block_on(task);
+    println!("Done");
 }
