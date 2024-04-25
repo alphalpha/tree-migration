@@ -33,7 +33,18 @@ pub async fn run(
             date = d;
             file = p;
         }
-        let in_image = Some(image::open(&file)?.to_rgb8());
+
+        let in_image = match image::open(&file) {
+            Ok(i) => Some(i.to_rgb8()),
+            Err(e) => {
+                println!("Error Opening File {}: {}", file.display(), e);
+                None
+            }
+        };
+        if in_image.is_none() {
+            current_date = current_date + config.duration;
+            continue;
+        }
 
         if config.night_times.is_some()
             && (current_date.time() >= config.night_times.unwrap().0
