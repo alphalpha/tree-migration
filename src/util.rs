@@ -139,7 +139,7 @@ pub fn generate_image(
 
         let font_height = config.font.scale.y;
         position.y = config.font.pos.1 + font_height as i32;
-        let title = "Average colour of forest activity";
+        let title = "Average colour of vegetation";
         draw_citing(&mut image, &config, &position, title);
 
         position.y = config.font.pos.1 + 2 * font_height as i32;
