@@ -81,7 +81,12 @@ impl Config {
                 )));
             };
         }
+
+        // Always overwrite output dir
         let output_dir = input_dir.join(Path::new("Output"));
+        if output_dir.exists() {
+            fs::remove_dir_all(&output_dir)?;
+        }
         fs::create_dir(&output_dir).map_err(|_| {
             util::Error::Custom(format!("{} already exists.", output_dir.display()))
         })?;
