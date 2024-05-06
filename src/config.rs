@@ -100,8 +100,12 @@ impl Config {
         let mut night_times = None;
         if raw_config.night_times[0] != raw_config.night_times[1] {
             night_times = Some((
-                NaiveTime::from_hms_opt(raw_config.night_times[0], 0, 0).unwrap(),
-                NaiveTime::from_hms_opt(raw_config.night_times[1], 0, 0).unwrap(),
+                NaiveTime::from_hms_opt(raw_config.night_times[0], 0, 0).ok_or(
+                    util::Error::Custom("night_times [0] from_hms_opt fails".to_owned()),
+                )?,
+                NaiveTime::from_hms_opt(raw_config.night_times[1], 0, 0).ok_or(
+                    util::Error::Custom("night_times [0] from_hms_opt fails".to_owned()),
+                )?,
             ));
         }
 
